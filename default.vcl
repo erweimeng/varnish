@@ -45,10 +45,52 @@ sub vcl_recv {
     	unset req.http.Cookie;
     	return (hash);
   	}
+	if (req.http.Authorization || req.http.Cookie) {
+	return (pass);
 }
-#sub vcl_pipe {
-#	return (pipe);
-#}
+}
+
+
+
+
+#对于特定类型的资源，例如公开的图片等，取消其私有标识，并强行设定其可以由varnish缓存的时长
+sub vcl_backend_response {
+    if (beresp.http.cache-control !~ "s-maxage") {
+	if (bereq.url ~ "(?i)\.(jpg|jpeg|png|gif|css|js)$") {
+		unset beresp.http.Set-Cookie;
+		set beresp.ttl = 3600s;
+		}
+	}
+     if (bereq.http.host == "(www.)?laiwojia.la") {
+        if (bereq.url ~ "(?i)/api/product/hotlist"
+           ||bereq.url ~ "(?i)/api/dolphin/list"
+           ||bereq.url ~ "(?i)/api/product/baseInfo"
+           ||bereq.url ~ "(?i)/api/product/desc"
+           ||bereq.url ~ "(?i)/api/search/brandRecommendProduct"   
+           ||bereq.url ~ "(?i)/cms/view/h5/headlinesList"   
+           ||bereq.url ~ "(?i)/cms/view/h5/category"       
+           ||bereq.url ~ "(?i)/cms/view/h5/article"       
+           ||bereq.url ~ "(?i)/cms/view/h5/\w+\.html"     
+           ||bereq.url ~ "(?i)/api/product/distributions")
+        {
+         set beresp.ttl = 300s;  //缓存时间改为5分钟
+        }
+        elseif (bereq.url ~ "(?i)/api/search/searchList\?sortType=volume4sale_desc\&companyId=10\&keyword=\*\*\*\*\*\&pageSize=10" )
+        {
+          set beresp.ttl = 60s;  //设置为1分钟
+        }
+        elseif (bereq.url ~ "(?i)/cms/view/.*/templateJS\.json" 
+              ||bereq.url ~ "(?i)\.html")
+        {
+          set beresp.ttl = 600s;  //设置为10分钟
+        }
+        elseif (bereq.url ~ "(?i)/libs/")
+        {
+           set beresp.ttl = 1800s;
+        }
+
+}
+}
 #sub vcl_deliver {
 #    # Happens when we have all the pieces we need, and are about to send the
 #    # response to the client.
