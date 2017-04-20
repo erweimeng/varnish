@@ -11,6 +11,8 @@
 # Marker to tell the VCL compiler that this VCL has been adapted to the
 # new 4.0 format.
 vcl 4.0;
+
+#导入模块,基于负载均衡调度，后端多个主机
 import directors;
 # Default backend definition. Set this to point to your content server.
 backend web1 {
@@ -18,6 +20,7 @@ backend web1 {
     .port = "80";
 }
 
+#用户请求成功后,对请求的数据做处理;
 sub vcl_recv {    
    if (req.http.host ~ "(www.)?laiwojia.la") {
 	set req.backend_hint = web1;
@@ -91,12 +94,7 @@ sub vcl_backend_response {
 
 }
 }
-#sub vcl_deliver {
-#    # Happens when we have all the pieces we need, and are about to send the
-#    # response to the client.
-#    # 
-#    # You can do accounting or modifying the final object here.
-#}
+#结果投递
 sub vcl_deliver {
     if (obj.hits > 0) {
        set resp.http.X-Cache = "Hit"+server.ip;
