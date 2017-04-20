@@ -35,6 +35,7 @@ sub vcl_recv {
     if (req.url ~ "(?i)\.(jpg|jpeg|png|gif|css|js)$") {
 	set req.backend_hint = web1;
 	}
+	####varnish4.*版本使用时req.method;varnish3.*的版本使用req.request,这点要注意
 	if (req.method !="GET" && req.method != "HEAD" && req.method != "PUT" && req.method != "POST" && req.method != "TRACE" && req.method != "OPTIONS" && req.method != "PATCH" &&  req.method != "DELETE") {
 	return (pipe);
 	}
