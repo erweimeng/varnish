@@ -95,6 +95,43 @@ sub vcl_backend_response {
 
 }
 }
+
+sub vcl_pipe {
+	if (req.http.upgrade) {
+    		set bereq.http.upgrade = req.http.upgrade;
+  	}
+	return (pipe);
+}
+
+sub vcl_pass {
+#	return (pass);
+}
+
+
+sub vcl_hash {
+	hash_data(req.url);
+	if (req.http.host) {
+		hash_data(req.http.host);
+	} else {
+		 hash_data(server.ip);
+	}
+
+	if (req.http.Cookie) {
+    		hash_data(req.http.Cookie);
+  	}
+}
+
+sub vcl_hit {
+	if (obj.ttl >= 0s) {
+		return (deliver);
+	}
+}
+
+sub vcl_miss {
+	return (fetch);
+}
+
+
 #结果投递
 sub vcl_deliver {
     if (obj.hits > 0) {
