@@ -22,3 +22,10 @@ rpm --nosignature -i http://repo.varnish-cache.org/redhat/varnish-4.0/el6/x86_64
 
 4、安装完成后，启动varnish：
 service varnish start
+
+5、重新加载varnish配置文件
+varnish_reload_vcl 命令操作
+
+
+6、查看varnish的命中率
+varnishstat
