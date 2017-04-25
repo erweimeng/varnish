@@ -92,7 +92,7 @@ sub vcl_backend_response {
         {
            set beresp.ttl = 1800s;
         }
-
+	set beresp.grace = 2m; #Varnish 允许在缓存对象超时的 2 分钟之内，继续返回已经过期的缓存对象
 }
 }
 
