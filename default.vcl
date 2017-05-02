@@ -92,7 +92,7 @@ sub vcl_backend_response {
         {
            set beresp.ttl = 1800s;
         }
-	set beresp.grace = 2m; #Varnish 允许在缓存对象超时的 2 分钟之内，继续返回已经过期的缓存对象
+	set beresp.grace = 2m;
 }
 }
 
@@ -133,10 +133,20 @@ sub vcl_miss {
 
 
 #结果投递
+#响应
+#sub vcl_deliver {
+#    if (obj.hits > 0) {
+#       set resp.http.X-Cache = "Hit"+server.ip; //服务器响应返回"HIT" + Varnish server ip
+#     } else {
+#       set resp.http.X-Cache = "Miss"; //返回未命中
+#     }
+#}
 sub vcl_deliver {
-    if (obj.hits > 0) {
-       set resp.http.X-Cache = "Hit"+server.ip;
-     } else {
-       set resp.http.X-Cache = "Miss";
-     }
+	set resp.http.X-Age = resp.http.Age;  #响应返回Age,
+	unset resp.http.X-Age;
+	if (obj.hits > 0) {
+		set resp.http.X-Cache = "HIT";	#服务器响应只返回命中或者未命中;
+	} else {
+		set resp.http.X-Cache = "MISS";
+	}
 }
