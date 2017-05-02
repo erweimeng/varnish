@@ -132,7 +132,7 @@ sub vcl_miss {
 }
 
 
-#结果投递
+#结果投递,下面配置二选一都可以
 #响应
 #sub vcl_deliver {
 #    if (obj.hits > 0) {
