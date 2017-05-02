@@ -20,12 +20,12 @@ backend web1 {
     .port = "80";
 }
 
-#用户请求成功后,对请求的数据做处理;
+#注意:用户请求成功后,对请求的数据做处理,varnish4走缓存使用return (hash); varnish3走缓存使用 return(lookup);还是有区别的。
 sub vcl_recv {    
-   if (req.http.host ~ "(www.)?laiwojia.la") {
+   if (req.http.host ~ "(www.)?laiwojia.la") {  #如果请求的是www域名就走web1
 	set req.backend_hint = web1;
 	}
-	return(hash);
+	#return(hash);		#否则就走hash,
     if (req.url ~ "(?i)^/(login|admin)") {
 	return(pass);
 	}
@@ -35,7 +35,7 @@ sub vcl_recv {
     if (req.url ~ "(?i)\.(jpg|jpeg|png|gif|css|js)$") {
 	set req.backend_hint = web1;
 	}
-	####varnish4.*版本使用时req.method;varnish3.*的版本使用req.request,这点要注意
+	####注意:varnish4.*版本使用时req.method;varnish3.*的版本使用req.request,这点要注意
 	if (req.method !="GET" && req.method != "HEAD" && req.method != "PUT" && req.method != "POST" && req.method != "TRACE" && req.method != "OPTIONS" && req.method != "PATCH" &&  req.method != "DELETE") {
 	return (pipe);
 	}
@@ -51,7 +51,11 @@ sub vcl_recv {
   	}
 	if (req.http.Authorization || req.http.Cookie) {
 	return (pass);
-}
+	}
+	if (req.url ~ "test.html") { #如果请求的是test.html 就pass
+	return (pass);
+	}
+	return (hash);		#否则就走缓存
 }
 
 
@@ -132,7 +136,7 @@ sub vcl_miss {
 }
 
 
-#结果投递,下面配置二选一都可以
+#结果投递
 #响应
 #sub vcl_deliver {
 #    if (obj.hits > 0) {
@@ -145,7 +149,7 @@ sub vcl_deliver {
 	set resp.http.X-Age = resp.http.Age;  #响应返回Age,
 	unset resp.http.X-Age;
 	if (obj.hits > 0) {
-		set resp.http.X-Cache = "HIT";	#服务器响应只返回命中或者未命中;
+		set resp.http.X-Cache = "HIT"+server.hostname;	#服务器响应只返回命中或者未命中;
 	} else {
 		set resp.http.X-Cache = "MISS";
 	}
